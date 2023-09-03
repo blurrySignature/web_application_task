@@ -1,0 +1,40 @@
+-
+  name: Configure some host
+  hosts: ubuntu_server
+  become: yes
+  vars:
+    sshd_config_file: /etc/ssh/sshd_config
+
+  tasks:
+  -
+    name: Create user
+    user:
+      name: cloudru
+      password: "{{ 'cloudpass' | password_hash('sha512') }}"
+      shell: /bin/bash
+  -
+    name: Permit login with ssh
+    lineinfile:
+      path: "{{ sshd_config_file }}"
+      regexp: '^(#)?PubkeyAuthentication'
+      line: 'PubkeyAuthentication yes'
+    notify: restart ssh
+  -
+    name: Disable ssh login for root
+    lineinfile:
+      path: "{{ sshd_config_file }}"
+      regexp: '^(#)?PermitRootLogin'
+      line: 'PermitRootLogin no'
+    notify: restart ssh
+  -
+    name: Add public key on host to user cloudru
+    authorized_key:
+      user: cloudru
+      key: "{{ lookup('file', './cloudru.pub') }}"
+
+  handlers:
+  -
+    name: restart ssh
+    service:
+      name: sshd
+      state: restarted
