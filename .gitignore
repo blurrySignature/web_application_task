@@ -1,1 +1,4 @@
 .idea/
+./app/venv/
+./app/lib/
+./app/lib64/
